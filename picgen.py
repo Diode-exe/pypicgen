@@ -6,7 +6,7 @@ output = "array.txt"
 
 def number_gen():
     with open (output, "w") as f:
-        for each in range(1, 3000000):
+        for each in range(1, 262144):
             rn = str(randint(1, 148))
             f.write(" ")
             f.write(rn)
@@ -59,4 +59,5 @@ for i, color_name in enumerate(colors):
 
 img.save("pixel_grid.png")
 print("Image saved!")
+
 
