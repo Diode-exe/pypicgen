@@ -1,62 +1,41 @@
+import numpy as np
 from PIL import Image
 from matplotlib import colors as cl
-from random import randint
+import datetime
+import os
 
-output = "array.txt"
+output_dir = "img"
+os.makedirs(output_dir, exist_ok=True)
 
-def number_gen():
-    with open (output, "w") as f:
-        for each in range(1, 3000000):
-            rn = str(randint(1, 148))
-            f.write(" ")
-            f.write(rn)
-        f.write(" ")
-
-number_gen()
-
-source = "array.txt"
-lines = []
-colors = []
-
-try:
-    with open(source, "r") as f:
-        for line in f:
-            lines.append(line.strip())
-except FileNotFoundError:
-    print(f"[ERROR] {source} not found!")
-    exit()
-
-css_colors = cl.CSS4_COLORS  # dict: name -> hex string
-
-# Create a numeric color map
-color_map = {i: name for i, name in enumerate(css_colors.keys())}
-
-# Convert hex to RGB
-rgb_map = {
-    name: tuple(int(hex_color[i:i+2], 16) for i in (1, 3, 5))
-    for name, hex_color in css_colors.items()
-}
-
-# Convert lines to colors properly
-for line in lines:
-    for num_str in line.split():  # split by whitespace
-        if num_str.isdigit():
-            num = int(num_str)
-            if num in color_map:
-                colors.append(color_map[num])
-
-# Create 512x512 image
 grid_width = 512
 grid_height = 512
-img = Image.new("RGB", (grid_width, grid_height))
+num_pixels = grid_width * grid_height
 
-for i, color_name in enumerate(colors):
-    if i >= grid_width * grid_height:
-        break
-    x = i % grid_width
-    y = i // grid_width
-    img.putpixel((x, y), rgb_map.get(color_name, (0, 0, 0)))
+# Prepare color map as a proper uint8 NumPy array
+css_colors = list(cl.CSS4_COLORS.keys())
+rgb_map = np.array(
+    [tuple(int(cl.CSS4_COLORS[name][i:i+2], 16) for i in (1, 3, 5))
+     for name in css_colors],
+    dtype=np.uint8
+)
 
-img.save("pixel_grid.png")
-print("Image saved!")
+def getTimeAndDate():
+    return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
+def generator():
+    while True:
+        # Generate indices for all pixels
+        indices = np.random.randint(0, len(css_colors), size=num_pixels)
+
+        # Map indices to RGB
+        img_array = rgb_map[indices]
+
+        # Ensure it's the right shape
+        img_array = img_array.reshape((grid_height, grid_width, 3))
+
+        # Convert to image
+        img = Image.fromarray(img_array, "RGB")
+        img.save(f"{output_dir}/{getTimeAndDate()}.png")
+        print("Image saved!")
+
+generator()
